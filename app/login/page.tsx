@@ -23,7 +23,7 @@ export default function LoginPage() {
     try {
       const result = await login(email.trim(), password);
       if (result.error) { setError(result.error); return; }
-      router.push(result.isAdmin && !hasNext ? '/admin' : next);
+      router.push(result.isAdmin ? '/admin' : next);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Sign in failed. Please try again.');
     } finally {

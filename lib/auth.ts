@@ -107,7 +107,10 @@ export async function login(email: string, password: string): Promise<{ error?: 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: error.message };
   if (!data.user) return { error: 'Could not load your account.' };
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
+  const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
+  if (profileError) {
+    return { error: 'Signed in, but could not check your account role. Make sure the admin migration is applied to the Supabase project configured in Vercel.' };
+  }
   return { user: toAppUser(data.user), isAdmin: profile?.role === 'admin' };
 }
 
