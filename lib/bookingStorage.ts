@@ -19,7 +19,7 @@ export interface Booking {
   promoCode?: string;
   discountAmount?: number;
   subtotal?: number;
-  status: 'Pending' | 'Confirmed' | 'Cancelled';
+  status: 'Pending' | 'Confirmed' | 'Cancelled' | 'Returned';
   createdAt: string;
 }
 

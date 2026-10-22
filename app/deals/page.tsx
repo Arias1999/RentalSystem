@@ -15,18 +15,13 @@ interface Deal {
 }
 
 const DEALS: Deal[] = [
-  { id: 1, title: 'Weekend Getaway Special', desc: 'Rent any Economy or Sedan car for the weekend and get 20% off. Perfect for short city escapes.', discount: '20% OFF', validUntil: 'Dec 31, 2025', code: 'WEEKEND20', color: '#e8f5ee', badge: 'Popular' },
-  { id: 2, title: 'Outstation Road Trip Deal', desc: 'Book an SUV or MUV for 3+ days and enjoy flat ₹500 off per day. Ideal for Manali, Shimla & Leh trips.', discount: '₹500/day OFF', validUntil: 'Jan 15, 2026', code: 'ROADTRIP500', color: '#fff8e1', badge: 'Best Value' },
-  { id: 3, title: 'Corporate Monthly Plan', desc: 'Monthly rentals for businesses. Get a dedicated fleet with a chauffeur at discounted corporate rates.', discount: '30% OFF', validUntil: 'Ongoing', code: 'CORP30', color: '#f0f4ff', badge: 'Corporate' },
-  { id: 4, title: 'First Ride Discount', desc: 'New to DriveEasy? Get ₱300 off your first booking. Apply the code at booking. No minimum booking value required.', discount: '₱300 OFF', validUntil: 'Dec 31, 2026', code: 'FIRST300', color: '#fce8f3', badge: 'New Users' },
-  { id: 5, title: 'Group Travel Offer', desc: 'Booking a Tempo Traveller for 10+ people? Get 15% off and a complimentary driver for the first day.', discount: '15% OFF', validUntil: 'Mar 31, 2026', code: 'GROUP15', color: '#e8f5ee', badge: 'Groups' },
-  { id: 6, title: 'Luxury Car Weekend', desc: 'Experience premium travel. Rent a Luxury car on weekends at 25% off the standard rate.', discount: '25% OFF', validUntil: 'Feb 28, 2026', code: 'LUXWEEK25', color: '#f5f0ff', badge: 'Luxury' },
+  { id: 4, title: 'First Ride Discount', desc: 'New to DriveEasy? Get â‚±300 off your first booking. Apply the code at booking. No minimum booking value required.', discount: 'â‚±300 OFF', validUntil: 'Dec 31, 2026', code: 'FIRST300', color: '#fce8f3', badge: 'New Users' },
 ];
 
 export default function DealsPage() {
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
-    alert(`Coupon code "${code}" copied. Paste it into the booking form and choose Apply.`);
+    alert(`Coupon code "${code}" copied. Paste it into the vehicle booking form and choose Apply.`);
   };
 
   return (

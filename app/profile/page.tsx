@@ -18,13 +18,17 @@ export default function ProfilePage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const currentUser = getSession();
-    if (!currentUser) {
-      router.replace('/login?next=%2Fprofile');
-      return;
-    }
-    setUser(currentUser);
-    setFields({ name: currentUser.name, phone: currentUser.phone || '', address: currentUser.address || '' });
+    let active = true;
+    void getSession().then(currentUser => {
+      if (!active) return;
+      if (!currentUser) {
+        router.replace('/login?next=%2Fprofile');
+        return;
+      }
+      setUser(currentUser);
+      setFields({ name: currentUser.name, phone: currentUser.phone || '', address: currentUser.address || '' });
+    });
+    return () => { active = false; };
   }, [router]);
 
   const startEditing = () => {
@@ -35,11 +39,11 @@ export default function ProfilePage() {
     setEditing(true);
   };
 
-  const saveProfile = (event: React.FormEvent) => {
+  const saveProfile = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!fields.name.trim()) { setError('Enter your name.'); return; }
     if (!fields.phone.trim()) { setError('Enter your phone number.'); return; }
-    const result = updateProfile({ name: fields.name.trim(), phone: fields.phone.trim(), address: fields.address.trim() });
+    const result = await updateProfile({ name: fields.name.trim(), phone: fields.phone.trim(), address: fields.address.trim() });
     if (result.error || !result.user) { setError(result.error || 'Could not update your profile.'); return; }
     setUser(result.user);
     setFields({ name: result.user.name, phone: result.user.phone || '', address: result.user.address || '' });
@@ -48,8 +52,8 @@ export default function ProfilePage() {
     setSaved(true);
   };
 
-  const signOut = () => {
-    logout();
+  const signOut = async () => {
+    await logout();
     router.push('/');
   };
 

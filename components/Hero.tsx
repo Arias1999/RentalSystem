@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Shield, MapPin, Headphones, Car, ArrowRight } from 'lucide-react';
-import { getSession } from '@/lib/auth';
+import { useAuth } from '@/lib/auth';
 
 const FEATURES = [
   { icon: <Car size={18} />, label: 'Wide Range of Vehicles' },
@@ -13,6 +13,7 @@ const FEATURES = [
 
 export default function Hero() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   return (
     <section id="home" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f1f2e 0%, #1a3a2a 60%, #0f1f2e 100%)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', paddingTop: '70px' }}>
       <div style={{ position: 'absolute', inset: 0, backgroundImage: 'url(https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80)', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.18 }} />
@@ -29,7 +30,7 @@ export default function Hero() {
             Reliable cars. Flexible rentals. Unforgettable journeys. Whether it's a weekend getaway, a business trip, or your next big adventure — we've got you covered.
           </p>
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '56px' }}>
-            <Link href="/cars" onClick={event => { if (!getSession()) { event.preventDefault(); router.push('/login?next=%2Fcars'); } }} style={{ background: 'var(--green)', color: '#fff', padding: '15px 36px', borderRadius: '8px', fontWeight: 700, fontSize: '1rem', display: 'inline-flex', alignItems: 'center', gap: '8px', transition: 'background 0.2s, transform 0.2s', boxShadow: '0 8px 24px rgba(26,107,60,0.4)' }}
+            <Link href="/cars" onClick={event => { if (!loading && !user) { event.preventDefault(); router.push('/login?next=%2Fcars'); } }} style={{ background: 'var(--green)', color: '#fff', padding: '15px 36px', borderRadius: '8px', fontWeight: 700, fontSize: '1rem', display: 'inline-flex', alignItems: 'center', gap: '8px', transition: 'background 0.2s, transform 0.2s', boxShadow: '0 8px 24px rgba(26,107,60,0.4)' }}
               onMouseEnter={e => { e.currentTarget.style.background = 'var(--green-dark)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
               onMouseLeave={e => { e.currentTarget.style.background = 'var(--green)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
               Rent a Car <ArrowRight size={18} />

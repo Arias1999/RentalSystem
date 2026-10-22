@@ -5,7 +5,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { ALL_CARS } from '@/lib/cars';
 import { getSession } from '@/lib/auth';
-import { getBookings, saveBooking } from '@/lib/bookingStorage';
+import { saveBooking } from '@/lib/bookingStorage';
+import { getSupabaseBrowserClient } from '@/lib/supabase';
 import { FIRST_RIDE_PROMO, isPromoCurrent } from '@/lib/promotions';
 import { ArrowLeft, Car, CheckCircle, Fuel, Settings, Users } from 'lucide-react';
 import Link from 'next/link';
@@ -27,26 +28,47 @@ export default function CarDetailsPage() {
   const [promoMessage, setPromoMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [ready, setReady] = useState(false);
+  const [carAvailable, setCarAvailable] = useState(false);
+  const [bookingBusy, setBookingBusy] = useState(false);
 
   useEffect(() => {
+    let active = true;
     const params = new URLSearchParams(window.location.search);
     const query = (key: string, fallback: string) => params.get(key) || fallback;
-    const user = getSession();
-    if (!user) {
-      router.replace(`/login?next=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`);
-      return;
-    }
-    let saved: Partial<Details> = {};
-    try { saved = JSON.parse(sessionStorage.getItem('driveeasy_booking_draft') || '{}'); } catch { /* ignore invalid draft */ }
-    setDetails({
-      pickup: saved.pickup || query('pickup', ''), dropoff: saved.dropoff || query('dropoff', ''),
-      pickupDate: saved.pickupDate || query('pickupDate', today()), pickupTime: saved.pickupTime || query('pickupTime', '10:00'),
-      dropDate: saved.dropDate || query('dropDate', tomorrow()), dropTime: saved.dropTime || query('dropTime', '10:00'),
-      name: saved.name || user?.name || '', email: saved.email || user?.email || '', phone: saved.phone || user?.phone || '',
+    void getSession().then(user => {
+      if (!active) return;
+      if (!user) {
+        router.replace(`/login?next=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`);
+        return;
+      }
+      let saved: Partial<Details> = {};
+      try { saved = JSON.parse(sessionStorage.getItem('driveeasy_booking_draft') || '{}'); } catch { /* ignore invalid draft */ }
+      setDetails({
+        pickup: saved.pickup || query('pickup', ''), dropoff: saved.dropoff || query('dropoff', ''),
+        pickupDate: saved.pickupDate || query('pickupDate', today()), pickupTime: saved.pickupTime || query('pickupTime', '10:00'),
+        dropDate: saved.dropDate || query('dropDate', tomorrow()), dropTime: saved.dropTime || query('dropTime', '10:00'),
+        name: saved.name || user.name || '', email: saved.email || user.email || '', phone: saved.phone || user.phone || '',
+      });
+      setPromoInput(query('promo', '').toUpperCase());
+      setReady(true);
     });
-    setPromoInput(query('promo', '').toUpperCase());
-    setReady(true);
+    return () => { active = false; };
   }, [router]);
+
+  useEffect(() => {
+    let active = true;
+    if (!car) return;
+    const refreshAvailability = async () => {
+      try {
+        const { data } = await getSupabaseBrowserClient().from('cars').select('available').eq('id', car.id).maybeSingle();
+        if (active) setCarAvailable(data?.available === true);
+      } catch { /* Keep the current availability if the network is temporarily unavailable. */ }
+    };
+    void refreshAvailability();
+    const intervalId = window.setInterval(() => { void refreshAvailability(); }, 15000);
+    window.addEventListener('focus', refreshAvailability);
+    return () => { active = false; window.clearInterval(intervalId); window.removeEventListener('focus', refreshAvailability); };
+  }, [car]);
 
   const rentalDays = useMemo(() => {
     if (!details.pickupDate || !details.dropDate) return 1;
@@ -61,31 +83,71 @@ export default function CarDetailsPage() {
   if (!ready) return <><Navbar /><main style={{ paddingTop: 120, minHeight: '70vh', textAlign: 'center', color: 'var(--text-muted)' }}>Checking your account…</main><Footer /></>;
 
   const set = (key: keyof Details, value: string) => setDetails(current => ({ ...current, [key]: value }));
-  const applyPromo = () => {
+  const applyPromo = async () => {
     const code = promoInput.trim().toUpperCase();
-    const user = getSession();
+    const user = await getSession();
     if (code !== FIRST_RIDE_PROMO.code) { setAppliedPromo(''); setPromoMessage('That promo code is not valid.'); return; }
     if (!isPromoCurrent()) { setAppliedPromo(''); setPromoMessage('This promo code has expired.'); return; }
-    const hasPreviousBooking = getBookings().some(booking => booking.customerEmail?.toLowerCase() === user?.email.toLowerCase() && booking.status !== 'Cancelled');
+    if (!user) { setAppliedPromo(''); setPromoMessage('Sign in to use this first-booking promo.'); return; }
+    const { data: previousBooking, error: historyError } = await getSupabaseBrowserClient()
+      .from('bookings').select('id').eq('user_id', user.id).neq('status', 'Cancelled').limit(1).maybeSingle();
+    if (historyError) { setAppliedPromo(''); setPromoMessage('Could not verify your booking history. Please try again.'); return; }
+    const hasPreviousBooking = !!previousBooking;
     if (hasPreviousBooking) { setAppliedPromo(''); setPromoMessage('FIRST300 is for your first booking only.'); return; }
     setAppliedPromo(code);
     setPromoMessage(`Promo applied! ₱${Math.min(FIRST_RIDE_PROMO.discountAmount, subtotal).toLocaleString()} off your booking.`);
   };
 
-  const confirmBooking = (event: React.FormEvent) => {
+  const confirmBooking = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!carAvailable) { setError('This car is unavailable because it has already been booked. Please choose another car.'); return; }
     if (!details.pickup.trim() || !details.dropoff.trim()) { setError('Enter both pick-up and drop-off locations.'); return; }
     if (!details.pickupDate || !details.dropDate || details.pickupDate < today() || new Date(`${details.dropDate}T${details.dropTime}`) <= new Date(`${details.pickupDate}T${details.pickupTime}`)) { setError('Choose valid rental dates and times.'); return; }
     if (!details.name.trim() || !details.email.trim() || !details.phone.trim()) { setError('Complete your contact details to continue.'); return; }
     setError('');
-    if (!getSession()) {
+    const user = await getSession();
+    if (!user) {
       sessionStorage.setItem('driveeasy_booking_draft', JSON.stringify(details));
       router.push(`/login?next=${encodeURIComponent(`/cars/${car.id}?book=1`)}`);
       return;
     }
-    saveBooking({ car: car.name, carType: car.category, carImage: car.image, pickup: details.pickup, dropoff: details.dropoff, pickupDate: details.pickupDate, pickupTime: details.pickupTime, dropDate: details.dropDate, dropTime: details.dropTime, option: 'self', customerName: details.name, customerEmail: getSession()?.email || details.email, customerPhone: details.phone, dailyRate: car.price, rentalDays, subtotal, promoCode: appliedPromo || undefined, discountAmount, totalPrice });
+    setBookingBusy(true);
+    const { error: bookingError } = await getSupabaseBrowserClient().from('bookings').insert({
+      user_id: user.id,
+      car_id: car.id,
+      car_name: car.name,
+      car_type: car.category,
+      car_image: car.image,
+      pickup_location: details.pickup.trim(),
+      dropoff_location: details.dropoff.trim(),
+      pickup_date: details.pickupDate,
+      pickup_time: details.pickupTime,
+      dropoff_date: details.dropDate,
+      dropoff_time: details.dropTime,
+      rental_option: 'self',
+      customer_name: details.name.trim(),
+      customer_email: user.email || details.email.trim(),
+      customer_phone: details.phone.trim(),
+      daily_rate: car.price,
+      rental_days: rentalDays,
+      subtotal,
+      promo_code: appliedPromo || null,
+      discount_amount: discountAmount,
+      total_price: totalPrice,
+      status: 'Pending',
+    });
+    if (bookingError) {
+      setBookingBusy(false);
+      setError(bookingError.code === '23505'
+        ? 'Sorry, another customer just booked this car. Please choose a different vehicle.'
+        : bookingError.message);
+      return;
+    }
+    saveBooking({ car: car.name, carType: car.category, carImage: car.image, pickup: details.pickup, dropoff: details.dropoff, pickupDate: details.pickupDate, pickupTime: details.pickupTime, dropDate: details.dropDate, dropTime: details.dropTime, option: 'self', customerName: details.name, customerEmail: user.email || details.email, customerPhone: details.phone, dailyRate: car.price, rentalDays, subtotal, promoCode: appliedPromo || undefined, discountAmount, totalPrice });
     sessionStorage.removeItem('driveeasy_booking_draft');
+    setCarAvailable(false);
     setSubmitted(true);
+    setBookingBusy(false);
   };
 
   const field = (label: string, key: keyof Details, type = 'text', required = true) => (
@@ -106,7 +168,7 @@ export default function CarDetailsPage() {
               <span className="section-tag">{car.category}</span><h1 style={{ color: 'var(--navy)', fontSize: '2rem', marginBottom: 10 }}>{car.name}</h1>
               <p style={{ color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: 22 }}>{car.description}</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
-                {[['Transmission', car.transmission, <Settings size={16} />], ['Seats', `${car.seats} passengers`, <Users size={16} />], ['Fuel', car.fuel, <Fuel size={16} />], ['Availability', car.available ? 'Available' : 'Unavailable', <CheckCircle size={16} />]].map(([label, value, icon]) => <div key={String(label)} style={{ display: 'flex', gap: 10, color: 'var(--green)', background: 'var(--bg-gray)', padding: 14, borderRadius: 8 }}><span>{icon}</span><span style={{ color: 'var(--text)' }}><small style={{ display: 'block', color: 'var(--text-muted)' }}>{label}</small><b>{value}</b></span></div>)}
+                {[['Transmission', car.transmission, <Settings size={16} />], ['Seats', `${car.seats} passengers`, <Users size={16} />], ['Fuel', car.fuel, <Fuel size={16} />], ['Availability', carAvailable ? 'Available' : 'Unavailable', <CheckCircle size={16} />]].map(([label, value, icon]) => <div key={String(label)} style={{ display: 'flex', gap: 10, color: 'var(--green)', background: 'var(--bg-gray)', padding: 14, borderRadius: 8 }}><span>{icon}</span><span style={{ color: 'var(--text)' }}><small style={{ display: 'block', color: 'var(--text-muted)' }}>{label}</small><b>{value}</b></span></div>)}
               </div>
               <h2 style={{ color: 'var(--navy)', fontSize: '1.05rem', marginTop: 24, marginBottom: 10 }}>Vehicle features</h2>
               <p style={{ color: 'var(--text-muted)', lineHeight: 1.8 }}>{car.features.join(' · ')}</p>
@@ -139,7 +201,7 @@ export default function CarDetailsPage() {
                   <div style={{ borderTop: '1px solid rgba(26,107,60,0.2)', marginTop: 10, paddingTop: 10, display: 'flex', justifyContent: 'space-between', fontWeight: 800 }}><span>{appliedPromo ? 'Total after discount' : 'Estimated total'}</span><span>₱{totalPrice.toLocaleString()}</span></div>
                 </div>
                 {error && <p role="alert" style={{ color: '#dc2626', fontSize: '0.85rem' }}>{error}</p>}
-                <button type="submit" className="btn-primary" disabled={!car.available} style={{ justifyContent: 'center', padding: 13, opacity: car.available ? 1 : 0.5 }}>Confirm Booking <ArrowLeft size={15} style={{ transform: 'rotate(180deg)' }} /></button>
+                <button type="submit" className="btn-primary" disabled={!carAvailable || bookingBusy} style={{ justifyContent: 'center', padding: 13, opacity: carAvailable && !bookingBusy ? 1 : 0.5 }}>{bookingBusy ? 'Booking…' : carAvailable ? 'Confirm Booking' : 'Car Unavailable'} <ArrowLeft size={15} style={{ transform: 'rotate(180deg)' }} /></button>
               </form>
             </>}
           </section>

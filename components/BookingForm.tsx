@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { MapPin, Calendar, Clock, Car, CheckCircle } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ReactNode, Suspense } from 'react';
-import { saveBooking } from '@/lib/bookingStorage';
 
 interface FormState {
   pickup: string;
@@ -70,20 +69,19 @@ function BookingFormInner() {
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setErrors({});
 
-    saveBooking({
-      car: carName || `${form.carType === 'Any Type' ? 'Any' : form.carType} Car`,
-      carType: form.carType === 'Any Type' ? 'Any' : form.carType,
-      carImage,
-      pickup: form.pickup,
+    setSubmitted(true);
+    const params = new URLSearchParams({
+      pickup: form.pickup.trim(),
       pickupDate: form.pickupDate,
       pickupTime: form.pickupTime,
       dropDate: form.dropDate,
       dropTime: form.dropTime,
-      option: form.option,
+      days: String(Math.max(1, Math.ceil((new Date(`${form.dropDate}T${form.dropTime}`).getTime() - new Date(`${form.pickupDate}T${form.pickupTime}`).getTime()) / 86400000))),
     });
-
-    setSubmitted(true);
-    setTimeout(() => router.push('/my-bookings'), 1500);
+    if (form.carType !== 'Any Type') params.set('type', form.carType);
+    const promo = searchParams.get('promo');
+    if (promo) params.set('promo', promo);
+    router.push(`/cars?${params.toString()}`);
   };
 
   const inputStyle = (err?: string): React.CSSProperties => ({
@@ -96,8 +94,8 @@ function BookingFormInner() {
     return (
       <div style={{ background: '#fff', borderRadius: '16px', padding: '48px 28px', boxShadow: '0 20px 60px rgba(0,0,0,0.25)', textAlign: 'center' }}>
         <CheckCircle size={52} color="var(--green)" style={{ marginBottom: '16px' }} />
-        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--navy)', marginBottom: '8px' }}>Booking Submitted!</h3>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Redirecting to your bookings...</p>
+        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--navy)', marginBottom: '8px' }}>Finding available cars…</h3>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Choose a vehicle to continue your booking.</p>
       </div>
     );
   }
@@ -153,7 +151,7 @@ function BookingFormInner() {
           </div>
         </div>
         <button type="submit" className="btn-primary" style={{ justifyContent: 'center', padding: '14px', fontSize: '1rem', marginTop: '4px' }}>
-          Confirm Booking
+          Find available cars
         </button>
       </form>
     </div>

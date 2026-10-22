@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Phone, Menu, X } from 'lucide-react';
 import { getBookings } from '@/lib/bookingStorage';
-import { authChangeEventName, getSession, type User } from '@/lib/auth';
+import { useAuth } from '@/lib/auth';
 
 const NAV_LINKS = [
   { label: 'Home', href: '/' },
@@ -21,7 +21,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
-  const [user, setUser] = useState<User | null>(null);
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -30,22 +30,11 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const update = () => setPendingCount(getBookings().filter(b => b.status === 'Pending').length);
+    const update = () => setPendingCount(getBookings().filter(b => b.status === 'Pending' && b.customerEmail?.toLowerCase() === user?.email.toLowerCase()).length);
     update();
     window.addEventListener('focus', update);
     return () => window.removeEventListener('focus', update);
-  }, []);
-
-  useEffect(() => {
-    const updateUser = () => setUser(getSession());
-    updateUser();
-    window.addEventListener('focus', updateUser);
-    window.addEventListener(authChangeEventName(), updateUser);
-    return () => {
-      window.removeEventListener('focus', updateUser);
-      window.removeEventListener(authChangeEventName(), updateUser);
-    };
-  }, []);
+  }, [user]);
 
   return (
     <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000, background: scrolled ? 'rgba(255,255,255,0.97)' : '#fff', boxShadow: scrolled ? '0 2px 20px rgba(0,0,0,0.1)' : '0 1px 0 var(--border)', transition: 'box-shadow 0.3s' }}>
@@ -73,7 +62,7 @@ export default function Navbar() {
             )}
           </Link>
           {user && <Link href="/profile" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--green)' }}>Profile</Link>}
-          <Link href="/cars" onClick={event => { if (!getSession()) { event.preventDefault(); router.push('/login?next=%2Fcars'); } }} className="btn-primary" style={{ padding: '9px 20px', fontSize: '0.85rem' }}>Rent a Car</Link>
+          <Link href="/cars" onClick={event => { if (!authLoading && !user) { event.preventDefault(); router.push('/login?next=%2Fcars'); } }} className="btn-primary" style={{ padding: '9px 20px', fontSize: '0.85rem' }}>Rent a Car</Link>
           <button onClick={() => setOpen(!open)} style={{ background: 'none', display: 'none', padding: '4px' }} className="mobile-menu-btn">
             {open ? <X size={24} /> : <Menu size={24} />}
           </button>

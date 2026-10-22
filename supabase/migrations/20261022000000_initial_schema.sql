@@ -84,11 +84,16 @@ security definer
 set search_path = ''
 as $$
 begin
-  insert into public.profiles (id, full_name, phone)
+  insert into public.profiles (
+    id, full_name, phone, address, license_number, license_expiry
+  )
   values (
     new.id,
     coalesce(new.raw_user_meta_data ->> 'full_name', ''),
-    nullif(new.raw_user_meta_data ->> 'phone', '')
+    nullif(new.raw_user_meta_data ->> 'phone', ''),
+    nullif(new.raw_user_meta_data ->> 'address', ''),
+    nullif(new.raw_user_meta_data ->> 'license_number', ''),
+    nullif(new.raw_user_meta_data ->> 'license_expiry', '')::date
   )
   on conflict (id) do nothing;
   return new;

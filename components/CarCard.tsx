@@ -1,12 +1,30 @@
 'use client';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Users, Fuel, Settings, Eye, ArrowRight } from 'lucide-react';
 import type { Car } from '@/lib/cars';
-import { getSession } from '@/lib/auth';
+import { useAuth } from '@/lib/auth';
+import { getSupabaseBrowserClient } from '@/lib/supabase';
 
 export default function CarCard({ car, bookingParams, rentalDays = 1 }: { car: Car; bookingParams?: Record<string, string>; rentalDays?: number }) {
   const router = useRouter();
+  const { user, loading } = useAuth();
+  const [isAvailable, setIsAvailable] = useState(car.available);
+
+  useEffect(() => {
+    let active = true;
+    const refreshAvailability = async () => {
+      try {
+        const { data } = await getSupabaseBrowserClient().from('cars').select('available').eq('id', car.id).maybeSingle();
+        if (active) setIsAvailable(data?.available === true);
+      } catch { /* Keep the current badge if the network is temporarily unavailable. */ }
+    };
+    void refreshAvailability();
+    const intervalId = window.setInterval(() => { void refreshAvailability(); }, 15000);
+    window.addEventListener('focus', refreshAvailability);
+    return () => { active = false; window.clearInterval(intervalId); window.removeEventListener('focus', refreshAvailability); };
+  }, [car.id]);
   const detailQuery = new URLSearchParams(Object.entries(bookingParams || {}).filter(([, value]) => value));
   const queryString = detailQuery.toString();
   const detailHref = `/cars/${car.id}${queryString ? `?${queryString}` : ''}`;
@@ -18,8 +36,8 @@ export default function CarCard({ car, bookingParams, rentalDays = 1 }: { car: C
       {/* Image */}
       <div style={{ position: 'relative', height: '180px', overflow: 'hidden', flexShrink: 0 }}>
         <img src={car.image} alt={car.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        <span style={{ position: 'absolute', top: '12px', left: '12px', background: car.available ? 'var(--green)' : '#ef4444', color: '#fff', fontSize: '0.7rem', fontWeight: 700, padding: '3px 10px', borderRadius: '20px' }}>
-          {car.available ? 'Available' : 'Unavailable'}
+        <span style={{ position: 'absolute', top: '12px', left: '12px', background: isAvailable ? 'var(--green)' : '#ef4444', color: '#fff', fontSize: '0.7rem', fontWeight: 700, padding: '3px 10px', borderRadius: '20px' }}>
+          {isAvailable ? 'Available' : 'Unavailable'}
         </span>
         <span style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.72rem', fontWeight: 600, padding: '3px 10px', borderRadius: '20px' }}>
           {car.category}
@@ -53,14 +71,14 @@ export default function CarCard({ car, bookingParams, rentalDays = 1 }: { car: C
 
         {/* Buttons */}
         <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
-          <Link href={detailHref} onClick={event => { if (!getSession()) { event.preventDefault(); router.push(`/login?next=${encodeURIComponent(detailHref)}`); } }}
+          <Link href={detailHref} onClick={event => { if (!loading && !user) { event.preventDefault(); router.push(`/login?next=${encodeURIComponent(detailHref)}`); } }}
             style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px', borderRadius: '8px', border: '1.5px solid var(--green)', color: 'var(--green)', fontWeight: 600, fontSize: '0.82rem', background: 'transparent', textDecoration: 'none', transition: 'background 0.2s' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'var(--green-light)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
             <Eye size={14} /> View Details
           </Link>
-          <Link href={car.available ? `${detailHref}${detailHref.includes('?') ? '&' : '?'}book=1` : '#'} onClick={event => { if (car.available && !getSession()) { event.preventDefault(); const href = `${detailHref}${detailHref.includes('?') ? '&' : '?'}book=1`; router.push(`/login?next=${encodeURIComponent(href)}`); } }}
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px', borderRadius: '8px', background: car.available ? 'var(--green)' : '#e5e7eb', color: car.available ? '#fff' : 'var(--text-muted)', fontWeight: 600, fontSize: '0.82rem', textDecoration: 'none', pointerEvents: car.available ? 'auto' : 'none' }}>
+          <Link href={isAvailable ? `${detailHref}${detailHref.includes('?') ? '&' : '?'}book=1` : '#'} onClick={event => { if (isAvailable && !loading && !user) { event.preventDefault(); const href = `${detailHref}${detailHref.includes('?') ? '&' : '?'}book=1`; router.push(`/login?next=${encodeURIComponent(href)}`); } }}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px', borderRadius: '8px', background: isAvailable ? 'var(--green)' : '#e5e7eb', color: isAvailable ? '#fff' : 'var(--text-muted)', fontWeight: 600, fontSize: '0.82rem', textDecoration: 'none', pointerEvents: isAvailable ? 'auto' : 'none' }}>
             Book Now <ArrowRight size={14} />
           </Link>
         </div>

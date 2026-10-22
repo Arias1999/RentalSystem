@@ -2,8 +2,9 @@
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { getBookings, cancelBooking, type Booking } from '@/lib/bookingStorage';
+import type { Booking } from '@/lib/bookingStorage';
 import { getSession } from '@/lib/auth';
+import { getSupabaseBrowserClient } from '@/lib/supabase';
 import { Calendar, MapPin, Car, Clock, X, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -11,22 +12,69 @@ const STATUS_STYLE: Record<Booking['status'], { bg: string; color: string }> = {
   Pending:   { bg: '#fef9c3', color: '#854d0e' },
   Confirmed: { bg: '#dcfce7', color: '#166534' },
   Cancelled: { bg: '#fee2e2', color: '#991b1b' },
+  Returned: { bg: '#dbeafe', color: '#1d4ed8' },
 };
 
 export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [signedIn, setSignedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
-    const user = getSession();
-    setSignedIn(!!user);
-    setBookings(user ? getBookings().filter(booking => booking.customerEmail?.toLowerCase() === user.email.toLowerCase()) : []);
+    let active = true;
+    const refresh = async () => {
+      const user = await getSession();
+      if (!active) return;
+      setSignedIn(!!user);
+      if (!user) { setBookings([]); setLoading(false); return; }
+      const { data, error } = await getSupabaseBrowserClient().from('bookings')
+        .select('id, car_name, car_type, car_image, pickup_location, dropoff_location, pickup_date, pickup_time, dropoff_date, dropoff_time, rental_option, customer_name, customer_email, customer_phone, daily_rate, rental_days, subtotal, promo_code, discount_amount, total_price, status, created_at')
+        .eq('user_id', user.id).order('created_at', { ascending: false });
+      if (!active) return;
+      if (error) setLoadError(error.message);
+      else {
+        setLoadError('');
+        setBookings((data || []).map(row => ({
+          id: row.id,
+          car: row.car_name,
+          carType: row.car_type,
+          carImage: row.car_image,
+          pickup: row.pickup_location,
+          dropoff: row.dropoff_location || undefined,
+          pickupDate: row.pickup_date,
+          pickupTime: row.pickup_time,
+          dropDate: row.dropoff_date,
+          dropTime: row.dropoff_time,
+          option: row.rental_option,
+          customerName: row.customer_name || undefined,
+          customerEmail: row.customer_email || undefined,
+          customerPhone: row.customer_phone || undefined,
+          dailyRate: row.daily_rate == null ? undefined : Number(row.daily_rate),
+          rentalDays: row.rental_days || undefined,
+          subtotal: row.subtotal == null ? undefined : Number(row.subtotal),
+          promoCode: row.promo_code || undefined,
+          discountAmount: Number(row.discount_amount || 0),
+          totalPrice: row.total_price == null ? undefined : Number(row.total_price),
+          status: row.status as Booking['status'],
+          createdAt: row.created_at,
+        })));
+      }
+      setLoading(false);
+    };
+    void refresh();
+    const intervalId = window.setInterval(() => { void refresh(); }, 15000);
+    window.addEventListener('focus', refresh);
+    return () => { active = false; window.clearInterval(intervalId); window.removeEventListener('focus', refresh); };
   }, []);
 
-  const handleCancel = (id: string) => {
-    cancelBooking(id);
-    const user = getSession();
-    setBookings(user ? getBookings().filter(booking => booking.customerEmail?.toLowerCase() === user.email.toLowerCase()) : []);
+  const handleCancel = async (id: string) => {
+    const user = await getSession();
+    if (!user) return;
+    const { error } = await getSupabaseBrowserClient().from('bookings').update({ status: 'Cancelled' })
+      .eq('id', id).eq('user_id', user.id).eq('status', 'Pending');
+    if (error) { setLoadError(error.message); return; }
+    setBookings(current => current.map(booking => booking.id === id ? { ...booking, status: 'Cancelled' } : booking));
   };
 
   const pending = bookings.filter(b => b.status === 'Pending');
@@ -45,7 +93,8 @@ export default function MyBookingsPage() {
         </div>
 
         <div className="container" style={{ padding: '48px 24px' }}>
-          {bookings.length === 0 ? (
+          {loadError && <p role="alert" style={{ color: '#b42318', marginBottom: 18 }}>{loadError}</p>}
+          {loading ? <p style={{ textAlign: 'center', padding: '70px 0', color: 'var(--text-muted)' }}>Loading your bookings…</p> : bookings.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '80px 0' }}>
               <div style={{ fontSize: '4rem', marginBottom: '16px' }}>🚗</div>
               <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--navy)', marginBottom: '8px' }}>{signedIn ? 'No bookings yet' : 'Sign in to view your bookings'}</h2>
@@ -107,6 +156,8 @@ function BookingCard({ booking: b, onCancel }: { booking: Booking; onCancel: (id
             {b.status}
           </span>
         </div>
+
+        {b.status === 'Returned' && <p role="status" style={{ background: '#eff6ff', color: '#1d4ed8', borderRadius: 8, padding: '9px 11px', fontSize: '0.8rem', fontWeight: 650, marginBottom: 13 }}>✓ Vehicle returned and rental completed.</p>}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '7px', fontSize: '0.83rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
           <span style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
