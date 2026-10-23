@@ -11,7 +11,6 @@ interface FormState {
   dropDate: string;
   dropTime: string;
   carType: string;
-  option: string;
 }
 
 interface Errors { pickup?: string; pickupDate?: string; dropDate?: string; }
@@ -47,7 +46,6 @@ function BookingFormInner() {
     dropDate: today,
     dropTime: '10:00',
     carType: CAR_TYPES.includes(carType) ? carType : 'Any Type',
-    option: 'self',
   });
   const [errors, setErrors] = useState<Errors>({});
   const [submitted, setSubmitted] = useState(false);
@@ -94,7 +92,7 @@ function BookingFormInner() {
     return (
       <div style={{ background: '#fff', borderRadius: '16px', padding: '48px 28px', boxShadow: '0 20px 60px rgba(0,0,0,0.25)', textAlign: 'center' }}>
         <CheckCircle size={52} color="var(--green)" style={{ marginBottom: '16px' }} />
-        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--navy)', marginBottom: '8px' }}>Finding available cars…</h3>
+        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--navy)', marginBottom: '8px' }}>Finding available carsâ€¦</h3>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Choose a vehicle to continue your booking.</p>
       </div>
     );
@@ -139,17 +137,6 @@ function BookingFormInner() {
             </select>
           </Field>
         )}
-        <div>
-          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Rental Option</label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-            {[{ val: 'self', label: '🚗 Self Drive' }, { val: 'driver', label: '👤 With Driver' }].map(o => (
-              <label key={o.val} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', border: `2px solid ${form.option === o.val ? 'var(--green)' : 'var(--border)'}`, borderRadius: '8px', cursor: 'pointer', background: form.option === o.val ? 'var(--green-light)' : '#fff', fontSize: '0.875rem', fontWeight: 500, transition: 'all 0.2s' }}>
-                <input type="radio" name="option" value={o.val} checked={form.option === o.val} onChange={() => set('option', o.val)} style={{ accentColor: 'var(--green)' }} />
-                {o.label}
-              </label>
-            ))}
-          </div>
-        </div>
         <button type="submit" className="btn-primary" style={{ justifyContent: 'center', padding: '14px', fontSize: '1rem', marginTop: '4px' }}>
           Find available cars
         </button>
