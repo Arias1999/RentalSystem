@@ -5,7 +5,7 @@ import Footer from '@/components/Footer';
 import type { Booking } from '@/lib/bookingStorage';
 import { getSession } from '@/lib/auth';
 import { getSupabaseBrowserClient } from '@/lib/supabase';
-import { Calendar, MapPin, Car, X, ArrowRight, Star } from 'lucide-react';
+import { Calendar, MapPin, Car, Clock, X, ArrowRight, Star } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
