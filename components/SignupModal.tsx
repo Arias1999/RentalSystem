@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, X } from 'lucide-react';
 import { register, resendSignupCode, verifySignupCode } from '@/lib/auth';
 import { OPEN_LOGIN_EVENT } from '@/components/LoginModal';
@@ -11,6 +11,7 @@ export const OPEN_SIGNUP_EVENT = 'driveeasy:open-signup';
 type SignupModalProps = { autoOpen?: boolean };
 
 export default function SignupModal({ autoOpen = false }: SignupModalProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -61,7 +62,9 @@ export default function SignupModal({ autoOpen = false }: SignupModalProps) {
     try {
       const result = await verifySignupCode(email.trim(), otp);
       if (result.error) { setError(result.error); return; }
-      setSuccess('Your email is verified and your account is ready. Welcome to DriveEasy!');
+      setOpen(false);
+      router.replace('/');
+      window.dispatchEvent(new CustomEvent(OPEN_LOGIN_EVENT, { detail: { next: '/' } }));
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Verification failed. Please try again.'); }
     finally { setBusy(false); }
   };
@@ -81,7 +84,7 @@ export default function SignupModal({ autoOpen = false }: SignupModalProps) {
       <h2 id="signup-title">{success && !awaitingCode ? 'You’re all set!' : 'Create your account'}</h2>
       <p className="signup-subtitle">{awaitingCode ? 'Check your inbox and enter the verification code.' : 'Enter your contact details to create your account.'}</p>
       {success && <p className="signup-message success" role="status">{success}</p>}
-      {success && !awaitingCode ? <div className="signup-success-actions"><Link className="signup-submit" href="/login">Sign in to your account</Link><button className="signup-dismiss" type="button" onClick={() => setOpen(false)}>Close</button></div> : awaitingCode ? <form className="signup-form" onSubmit={verify}>
+      {success && !awaitingCode ? <div className="signup-success-actions"><button className="signup-dismiss" type="button" onClick={() => setOpen(false)}>Close</button></div> : awaitingCode ? <form className="signup-form" onSubmit={verify}>
         <label>6-digit email code<input required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={otp} onChange={event => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))} /></label>
         {error && <p className="signup-message error" role="alert">{error}</p>}
         <button className="signup-submit" type="submit" disabled={busy}>{busy ? 'Verifying…' : 'Verify code'}</button>

@@ -12,11 +12,17 @@ export default function LoginModal() {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [nextPath, setNextPath] = useState('/my-bookings');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    const show = () => { setError(''); setOpen(true); };
+    const show = (event: Event) => {
+      const requested = (event as CustomEvent<{ next?: string }>).detail?.next;
+      setNextPath(requested?.startsWith('/') && !requested.startsWith('//') ? requested : '/my-bookings');
+      setError('');
+      setOpen(true);
+    };
     window.addEventListener(OPEN_LOGIN_EVENT, show);
     return () => window.removeEventListener(OPEN_LOGIN_EVENT, show);
   }, []);
@@ -35,7 +41,7 @@ export default function LoginModal() {
       const result = await login(email.trim(), password);
       if (result.error) { setError(result.error); return; }
       setOpen(false);
-      router.push(result.isAdmin ? '/admin' : '/my-bookings');
+      router.push(result.isAdmin ? '/admin' : nextPath);
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Sign in failed. Please try again.'); }
     finally { setBusy(false); }
   };
