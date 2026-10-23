@@ -57,7 +57,7 @@ export default function RegisterPage() {
     try {
       const result = await verifySignupCode(email.trim(), otp);
       if (result.error) { setError(result.error); return; }
-      router.push(next);
+      router.replace('/');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Code verification failed. Please try again.');
     } finally { setBusy(false); }
