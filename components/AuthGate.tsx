@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 
-const PUBLIC_PATHS = ['/', '/login', '/register', '/cars', '/locations', '/deals', '/about', '/blog', '/contact'];
+const PUBLIC_PATHS = ['/', '/login', '/register', '/deals', '/about', '/blog'];
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -19,7 +19,8 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       return;
     }
     const requested = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    router.replace(`/login?next=${encodeURIComponent(requested)}`);
+    const signUpRequired = pathname === '/cars' || pathname === '/contact';
+    router.replace(`/${signUpRequired ? 'register' : 'login'}?next=${encodeURIComponent(requested)}`);
   }, [isPublic, loading, pathname, router, user]);
 
   if (isPublic || (!loading && user && authorizedPath === pathname)) return <>{children}</>;

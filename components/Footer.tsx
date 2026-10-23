@@ -13,15 +13,9 @@ export default function Footer() {
               <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#fff' }}>Easy</span>
             </div>
             <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>RENT. EXPLORE. BELONG.</p>
-            <p style={{ lineHeight: 1.7, marginBottom: '20px' }}>Making car rentals simple, transparent, and hassle-free across India.</p>
+            <p style={{ lineHeight: 1.7, marginBottom: '20px' }}>Making car rentals simple, transparent, and hassle-free in Cebu.</p>
             <div style={{ display: 'flex', gap: '12px' }}>
-              {[Share2, MessageCircle, Send, Rss].map((Icon, i) => (
-                <a key={i} href="#" style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--green)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}>
-                  <Icon size={16} />
-                </a>
-              ))}
+             
             </div>
           </div>
           <div>
