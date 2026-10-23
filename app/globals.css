@@ -113,8 +113,11 @@ button { cursor: pointer; border: none; outline: none; font-family: inherit; }
 .location-card-actions .btn-primary { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; font-size: .82rem; }
 @media (max-width: 560px) { .locations-content { padding: 30px 16px; } .locations-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; } }
 @media (max-width: 360px) { .location-card-actions { flex-direction: column; } .location-card-actions > * { width: 100%; } }
-.destination-modal-overlay { overflow-y: auto; }
-.destination-popup { max-height: calc(100dvh - 48px); overflow-y: auto !important; }
+.destination-modal-overlay { overflow-y: auto; padding: 12px !important; }
+.destination-popup { max-height: calc(100dvh - 24px); overflow-y: auto !important; overscroll-behavior: contain; }
+.destination-popup > div:first-child { height: clamp(140px, 24dvh, 200px) !important; }
+.destination-popup > div:nth-child(2) { padding: clamp(14px, 2.5vh, 24px) !important; }
+.destination-popup > div:nth-child(2) > div:nth-child(2) { max-height: min(320px, 36dvh) !important; }
 .destination-modal-navigation { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .destinations-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 20px; width: 100%; }
 .destination-view-all-wrap { display: flex; justify-content: center; margin-top: 30px; }

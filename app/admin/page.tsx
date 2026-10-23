@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { Activity, ArrowDownRight, ArrowUpRight, CalendarDays, CarFront, CircleDollarSign, Clock3, LayoutDashboard, LogOut, Plus, RefreshCw, Search, ShieldAlert, Trash2, Users, Pencil, X, MapPin, Radio, MessageCircle, Send } from 'lucide-react';
+import { Activity, ArrowDownRight, ArrowUpRight, CalendarDays, CarFront, CircleDollarSign, Clock3, LayoutDashboard, LogOut, Plus, RefreshCw, Search, ShieldAlert, Trash2, Users, Pencil, X, MapPin, Radio, MessageCircle, Send, Star } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase';
 import { logout } from '@/lib/auth';
 
@@ -30,8 +30,9 @@ type Profile = { id: string; full_name: string; created_at: string };
 type CarRow = { id: number; name: string; category: string; transmission: string; seats: number; fuel: string; daily_rate: number; image_url: string; available: boolean; description: string; features: string[] };
 type VehicleLocation = { car_id: number; latitude: number; longitude: number; recorded_at: string; speed_kph: number | null; heading: number | null };
 type CustomerMessage = { id: string; customer_id: string; customer_name: string; customer_email: string; customer_phone: string | null; message: string; admin_reply: string | null; created_at: string; replied_at: string | null };
+type BookingReview = { id: string; booking_id: string; customer_id: string; rating: number; comment: string; created_at: string };
 type CarForm = Omit<CarRow, 'id'>;
-type Tab = 'Overview' | 'Bookings' | 'Customers' | 'Fleet' | 'Tracking' | 'Messages';
+type Tab = 'Overview' | 'Bookings' | 'Customers' | 'Fleet' | 'Tracking' | 'Ratings' | 'Messages';
 const emptyCar: CarForm = { name: '', category: 'Sedan', transmission: 'Automatic', seats: 5, fuel: 'Gasoline', daily_rate: 0, image_url: '', available: true, description: '', features: [] };
 
 const statusStyle: Record<Booking['status'], { bg: string; color: string }> = {
@@ -49,6 +50,9 @@ export default function AdminPage() {
   const [cars, setCars] = useState<CarRow[]>([]);
   const [vehicleLocations, setVehicleLocations] = useState<VehicleLocation[]>([]);
   const [customerMessages, setCustomerMessages] = useState<CustomerMessage[]>([]);
+  const [reviews, setReviews] = useState<BookingReview[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsError, setReviewsError] = useState('');
   const [messageDrafts, setMessageDrafts] = useState<Record<string, string>>({});
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [messagesError, setMessagesError] = useState('');
@@ -148,6 +152,24 @@ export default function AdminPage() {
     return () => window.clearInterval(interval);
   }, [tab, loadCustomerMessages]);
 
+  const loadReviews = useCallback(async () => {
+    setReviewsLoading(true);
+    const { data, error: queryError } = await getSupabaseBrowserClient().from('booking_reviews')
+      .select('id, booking_id, customer_id, rating, comment, created_at')
+      .order('created_at', { ascending: false });
+    if (queryError) setReviewsError(queryError.message);
+    else {
+      setReviewsError('');
+      setReviews((data || []) as BookingReview[]);
+    }
+    setReviewsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (tab !== 'Ratings') return;
+    void loadReviews();
+  }, [tab, loadReviews]);
+
   const saveMessageReply = async (message: CustomerMessage) => {
     const reply = (messageDrafts[message.id] ?? message.admin_reply ?? '').trim();
     if (!reply) { setMessagesError('Write a reply before sending.'); return; }
@@ -213,8 +235,8 @@ export default function AdminPage() {
       <aside className="admin-sidebar">
         <Link href="/" className="admin-brand">Drive<span>Easy</span><small>ADMIN CONSOLE</small></Link>
         <div className="admin-nav-label">WORKSPACE</div>
-        {(['Overview', 'Bookings', 'Customers', 'Fleet', 'Tracking', 'Messages'] as Tab[]).map((item, index) => {
-          const Icon = [LayoutDashboard, CalendarDays, Users, CarFront, MapPin, MessageCircle][index];
+        {(['Overview', 'Bookings', 'Customers', 'Fleet', 'Tracking', 'Ratings', 'Messages'] as Tab[]).map((item, index) => {
+          const Icon = [LayoutDashboard, CalendarDays, Users, CarFront, MapPin, Star, MessageCircle][index];
           return <button key={item} className={`admin-nav-item ${tab === item ? 'active' : ''}`} onClick={() => setTab(item)}><Icon size={18} />{item}{item === 'Bookings' && pending > 0 && <span className="admin-nav-count">{pending}</span>}</button>;
         })}
         <div className="admin-sidebar-bottom"><div className="admin-user-avatar">{adminName.slice(0, 1).toUpperCase()}</div><div className="admin-user-copy"><strong>{adminName}</strong><span>Administrator</span></div><button aria-label="Sign out" title="Sign out" className="admin-icon-button" onClick={async () => { await logout(); router.replace('/login'); }}><LogOut size={17} /></button></div>
@@ -235,7 +257,8 @@ export default function AdminPage() {
                 <StatCard icon={<CircleDollarSign size={19} />} label="Confirmed revenue" value={`₱${revenue.toLocaleString()}`} note="From confirmed bookings" color="#7047b8" pale="#f2edff" />
               </div>}
 
-              {tab === 'Messages' ? <MessagesPanel messages={customerMessages} loading={messagesLoading} error={messagesError} drafts={messageDrafts} busyId={busyId} onDraftChange={(id, value) => setMessageDrafts(current => ({ ...current, [id]: value }))} onReply={saveMessageReply} onRefresh={() => void loadCustomerMessages()} />
+              {tab === 'Ratings' ? <ReviewsPanel reviews={reviews} bookings={bookings} customers={customers} loading={reviewsLoading} error={reviewsError} onRefresh={() => void loadReviews()} />
+              : tab === 'Messages' ? <MessagesPanel messages={customerMessages} loading={messagesLoading} error={messagesError} drafts={messageDrafts} busyId={busyId} onDraftChange={(id, value) => setMessageDrafts(current => ({ ...current, [id]: value }))} onReply={saveMessageReply} onRefresh={() => void loadCustomerMessages()} />
               : tab === 'Tracking' ? <TrackingPanel cars={cars} locations={vehicleLocations} loading={trackingLoading} error={trackingError} onRefresh={() => void loadVehicleLocations()} />
               : tab === 'Customers' ? <section className="admin-panel"><PanelHeader title="Customers" subtitle={`${customers.length} registered accounts`} /><div className="admin-table-scroll"><table className="admin-table"><thead><tr><th>CUSTOMER</th><th>ACCOUNT ID</th><th>JOINED</th><th>ROLE</th></tr></thead><tbody>{customers.map(customer => <tr key={customer.id}><td><div className="admin-customer"><div className="admin-customer-avatar">{(customer.full_name || 'C').slice(0, 1).toUpperCase()}</div><strong>{customer.full_name || 'Customer'}</strong></div></td><td className="admin-muted">{customer.id.slice(0, 8)}…</td><td>{formatDate(customer.created_at)}</td><td><span className="admin-status" style={{ background: '#e8f5ee', color: '#1a6b3c' }}>Customer</span></td></tr>)}</tbody></table>{!loading && customers.length === 0 && <EmptyRows text="No customer accounts found." />}{loading && <EmptyRows text="Loading customers…" />}</div></section>
                 : tab === 'Fleet' ? <section className="admin-panel"><PanelHeader title="Fleet management" subtitle={`${cars.length} vehicles in your inventory`} action={<button className="admin-add-button" onClick={() => openCarDialog()}><Plus size={16} /> Add vehicle</button>} /><div className="admin-table-scroll"><table className="admin-table"><thead><tr><th>VEHICLE</th><th>CATEGORY</th><th>TRANSMISSION</th><th>SEATS</th><th>DAILY RATE</th><th>AVAILABILITY</th><th>ACTIONS</th></tr></thead><tbody>{cars.map(car => <tr key={car.id}><td><div className="admin-car-cell">{car.image_url ? <img src={car.image_url} alt="" /> : <div className="admin-car-placeholder"><CarFront size={18} /></div>}<div><strong>{car.name}</strong><span className="admin-subline">ID #{car.id}</span></div></div></td><td>{car.category}</td><td>{car.transmission}</td><td>{car.seats}</td><td><strong>₱{Number(car.daily_rate).toLocaleString()}</strong></td><td><span className="admin-status" style={car.available ? statusStyle.Confirmed : statusStyle.Cancelled}>{car.available ? 'Available' : 'Unavailable'}</span></td><td><div className="admin-car-actions"><button aria-label={`Edit ${car.name}`} title="Edit vehicle" onClick={() => openCarDialog(car)}><Pencil size={15} /></button><button aria-label={`Delete ${car.name}`} title="Delete vehicle" onClick={() => void deleteCar(car)}><Trash2 size={15} /></button></div></td></tr>)}</tbody></table>{loading && <EmptyRows text="Loading vehicles…" />}{!loading && cars.length === 0 && <EmptyRows text="No vehicles in the fleet." />}</div></section>
@@ -248,6 +271,41 @@ export default function AdminPage() {
       <style>{adminStyles}</style>
     </main>
   );
+}
+
+function ReviewsPanel({ reviews, bookings, customers, loading, error, onRefresh }: {
+  reviews: BookingReview[];
+  bookings: Booking[];
+  customers: Profile[];
+  loading: boolean;
+  error: string;
+  onRefresh: () => void;
+}) {
+  const bookingById = new Map(bookings.map(booking => [booking.id, booking]));
+  const customerById = new Map(customers.map(customer => [customer.id, customer]));
+  const average = reviews.length ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0;
+
+  return <section className="admin-panel">
+    <PanelHeader title="Customer ratings" subtitle={`${reviews.length} reviews · ${reviews.length ? `${average.toFixed(1)} average stars` : 'No ratings yet'}`} action={<button className="admin-refresh" onClick={onRefresh} disabled={loading}><RefreshCw size={15} className={loading ? 'admin-spin' : ''} /> Refresh</button>} />
+    {error && <p role="alert" className="admin-inline-error" style={{ margin: 20 }}>{error}</p>}
+    <div style={{ padding: 20, display: 'grid', gap: 12 }}>
+      {loading && reviews.length === 0 ? <EmptyRows text="Loading customer ratings…" /> : reviews.length === 0 ? <EmptyRows text="No customer ratings yet." /> : reviews.map(review => {
+        const booking = bookingById.get(review.booking_id);
+        const customer = customerById.get(review.customer_id);
+        return <article key={review.id} style={{ border: '1px solid #e8edef', borderRadius: 10, padding: 16, display: 'grid', gap: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10 }}>
+            <div><strong style={{ color: '#1b2c38' }}>{booking?.customer_name || customer?.full_name || 'Customer'}</strong><div style={{ color: '#78858d', fontSize: '.78rem', marginTop: 4 }}>{booking?.customer_email || 'Email unavailable'} · {booking?.car_name || `Booking #${review.booking_id.slice(0, 8)}`}</div></div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2 }} aria-label={`${review.rating} out of 5 stars`}>
+              {Array.from({ length: 5 }, (_, index) => <Star key={index} size={17} fill={index < review.rating ? '#eab308' : 'transparent'} color={index < review.rating ? '#eab308' : '#cbd5e1'} />)}
+              <span style={{ marginLeft: 5, color: '#53636c', fontSize: '.82rem', fontWeight: 700 }}>{review.rating}/5</span>
+            </div>
+          </div>
+          {review.comment && <p style={{ color: '#354650', whiteSpace: 'pre-wrap', lineHeight: 1.6, margin: 0 }}>{review.comment}</p>}
+          <small style={{ color: '#849098' }}>{new Date(review.created_at).toLocaleString()}</small>
+        </article>;
+      })}
+    </div>
+  </section>;
 }
 
 function MessagesPanel({ messages, loading, error, drafts, busyId, onDraftChange, onReply, onRefresh }: {
