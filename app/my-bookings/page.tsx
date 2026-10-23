@@ -133,6 +133,11 @@ export default function MyBookingsPage() {
                   </div>
                 </>
               )}
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '32px 0 12px' }}>
+                <Link href="/cars" className="btn-primary" style={{ display: 'inline-flex', gap: '8px', alignItems: 'center' }}>
+                  Book Now <ArrowRight size={16} />
+                </Link>
+              </div>
             </>
           )}
         </div>
