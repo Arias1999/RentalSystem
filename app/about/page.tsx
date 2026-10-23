@@ -5,10 +5,10 @@ import Footer from '@/components/Footer';
 import { Car, MapPin, Phone, ArrowRight, Users, BusFront } from 'lucide-react';
 
 const VEHICLES = [
-  { icon: <Car size={22} />, name: 'Economy cars', detail: 'Practical rides for everyday trips and couples.' },
-  { icon: <Car size={22} />, name: 'Sedans', detail: 'A comfortable choice for longer drives.' },
-  { icon: <Car size={22} />, name: 'SUVs & MUVs', detail: 'Extra room for family, friends, and luggage.' },
-  { icon: <BusFront size={22} />, name: 'Group vans', detail: 'Space for barkada trips and bigger groups.', image: 'https://images.unsplash.com/photo-1691358999346-0e727f002902?w=700&q=85' },
+  { icon: <Car size={22} />, name: 'Economy cars', detail: 'Practical rides for everyday trips and couples.', image: 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=700&q=85', imageAlt: 'Compact economy car' },
+  { icon: <Car size={22} />, name: 'Sedans', detail: 'A comfortable choice for longer drives.', image: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=700&q=85', imageAlt: 'Comfortable sedan' },
+  { icon: <Car size={22} />, name: 'SUVs & MUVs', detail: 'Extra room for family, friends, and luggage.', image: 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=700&q=85', imageAlt: 'Spacious SUV for family travel' },
+  { icon: <BusFront size={22} />, name: 'Group vans', detail: 'Space for barkada trips and bigger groups.', image: 'https://images.unsplash.com/photo-1691358999346-0e727f002902?w=700&q=85', imageAlt: 'Passenger van for group travel' },
 ];
 
 export default function AboutPage() {
@@ -16,7 +16,7 @@ export default function AboutPage() {
     <>
       <Navbar />
       <main style={{ paddingTop: '80px', minHeight: '100vh' }}>
-        <section style={{ background: 'var(--navy)', color: '#fff', padding: '76px 24px 84px', textAlign: 'center' }}>
+        <section style={{ backgroundColor: 'var(--navy)', backgroundImage: "linear-gradient(rgba(5, 35, 22, 0.5), rgba(5, 35, 22, 0.5)), url('/images/cebu-background.png')", backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', color: '#fff', padding: '76px 24px 84px', textAlign: 'center' }}>
           <div className="container">
             <span className="section-tag">About DriveEasy</span>
             <h1 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, margin: '12px 0 18px' }}>Car Rental for Your South Cebu Trip</h1>
@@ -39,7 +39,7 @@ export default function AboutPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '18px' }}>
             {VEHICLES.map(vehicle => (
               <div key={vehicle.name} style={{ borderRadius: 'var(--radius)', background: 'var(--bg-gray)', overflow: 'hidden' }}>
-                {'image' in vehicle && <img src={vehicle.image} alt="Passenger van for group travel" style={{ display: 'block', width: '100%', height: '150px', objectFit: 'cover' }} />}
+                <img src={vehicle.image} alt={vehicle.imageAlt} style={{ display: 'block', width: '100%', height: '150px', objectFit: 'cover' }} />
                 <div style={{ padding: '24px' }}>
                   <div style={{ color: 'var(--green)', marginBottom: '14px' }}>{vehicle.icon}</div>
                   <h3 style={{ color: 'var(--navy)', fontSize: '1.05rem', marginBottom: '7px' }}>{vehicle.name}</h3>

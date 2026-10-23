@@ -28,6 +28,7 @@ export default function CarCard({ car, bookingParams, rentalDays = 1 }: { car: C
   const detailQuery = new URLSearchParams(Object.entries(bookingParams || {}).filter(([, value]) => value));
   const queryString = detailQuery.toString();
   const detailHref = `/cars/${car.id}${queryString ? `?${queryString}` : ''}`;
+  const bookingHref = `/booking/${car.id}${queryString ? `?${queryString}&book=1` : '?book=1'}`;
   return (
     <div style={{ background: '#fff', borderRadius: 'var(--radius)', overflow: 'hidden', boxShadow: 'var(--shadow)', transition: 'transform 0.25s, box-shadow 0.25s', display: 'flex', flexDirection: 'column' }}
       onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.14)'; }}
@@ -77,7 +78,7 @@ export default function CarCard({ car, bookingParams, rentalDays = 1 }: { car: C
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
             <Eye size={14} /> View Details
           </Link>
-          <Link href={isAvailable ? `${detailHref}${detailHref.includes('?') ? '&' : '?'}book=1` : '#'} onClick={event => { if (isAvailable && !loading && !user) { event.preventDefault(); const href = `${detailHref}${detailHref.includes('?') ? '&' : '?'}book=1`; router.push(`/login?next=${encodeURIComponent(href)}`); } }}
+          <Link href={isAvailable ? bookingHref : '#'} onClick={event => { if (isAvailable && !loading && !user) { event.preventDefault(); router.push(`/login?next=${encodeURIComponent(bookingHref)}`); } }}
             style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px', borderRadius: '8px', background: isAvailable ? 'var(--green)' : '#e5e7eb', color: isAvailable ? '#fff' : 'var(--text-muted)', fontWeight: 600, fontSize: '0.82rem', textDecoration: 'none', pointerEvents: isAvailable ? 'auto' : 'none' }}>
             Book Now <ArrowRight size={14} />
           </Link>

@@ -49,7 +49,7 @@ export default function Footer() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                 <MapPin size={15} color="#6ee7a0" style={{ marginTop: '2px', flexShrink: 0 }} />
-                <span>12, Green Park, New Delhi – 110016</span>
+                <span>Sun valley V-Rama, Cebu City</span>
               </div>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                 <Phone size={15} color="#6ee7a0" />

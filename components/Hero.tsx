@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Shield, MapPin, Headphones, Car, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { OPEN_SIGNUP_EVENT } from '@/components/SignupModal';
 
 const FEATURES = [
   { icon: <Car size={18} />, label: 'Wide Range of Vehicles' },
@@ -16,7 +17,7 @@ export default function Hero() {
   const { user, loading } = useAuth();
   return (
     <section id="home" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f1f2e 0%, #1a3a2a 60%, #0f1f2e 100%)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', paddingTop: '70px' }}>
-      <div style={{ position: 'absolute', inset: 0, backgroundImage: 'url(https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80)', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.18 }} />
+      <div aria-hidden="true" style={{ position: 'absolute', inset: 0, backgroundImage: "linear-gradient(rgba(5, 35, 22, 0.42), rgba(5, 35, 22, 0.42)), url('/images/cebu-background.png')", backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }} />
       <div className="container" style={{ position: 'relative', zIndex: 1, width: '100%', padding: '80px 24px' }}>
         <div style={{ maxWidth: '720px', margin: '0 auto', textAlign: 'center' }}>
           <span style={{ display: 'inline-block', background: 'rgba(26,107,60,0.3)', color: '#6ee7a0', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '6px 14px', borderRadius: '20px', marginBottom: '24px', border: '1px solid rgba(110,231,160,0.3)' }}>
@@ -30,6 +31,7 @@ export default function Hero() {
             Reliable cars. Flexible rentals. Unforgettable journeys. Whether it's a weekend getaway, a business trip, or your next big adventure — we've got you covered.
           </p>
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '56px' }}>
+            {!user && <button type="button" onClick={() => window.dispatchEvent(new Event(OPEN_SIGNUP_EVENT))} style={{ background: '#fff', color: 'var(--green)', padding: '15px 36px', borderRadius: '8px', fontWeight: 700, fontSize: '1rem', border: '1px solid rgba(255,255,255,0.8)' }}>Get Started</button>}
             <Link href="/cars" onClick={event => { if (!loading && !user) { event.preventDefault(); router.push('/login?next=%2Fcars'); } }} style={{ background: 'var(--green)', color: '#fff', padding: '15px 36px', borderRadius: '8px', fontWeight: 700, fontSize: '1rem', display: 'inline-flex', alignItems: 'center', gap: '8px', transition: 'background 0.2s, transform 0.2s', boxShadow: '0 8px 24px rgba(26,107,60,0.4)' }}
               onMouseEnter={e => { e.currentTarget.style.background = 'var(--green-dark)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
               onMouseLeave={e => { e.currentTarget.style.background = 'var(--green)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
@@ -48,10 +50,6 @@ export default function Hero() {
                 {f.label}
               </div>
             ))}
-          </div>
-          <div style={{ marginTop: '56px' }}>
-            <img src="https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=1000&q=80" alt="Premium SUV"
-              style={{ width: '100%', maxWidth: '700px', borderRadius: '20px', boxShadow: '0 24px 80px rgba(0,0,0,0.5)' }} />
           </div>
         </div>
       </div>

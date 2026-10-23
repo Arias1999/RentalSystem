@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { ArrowRight, MapPin, X } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowLeft, ArrowRight, MapPin, X } from 'lucide-react';
 
 interface Spot {
   name: string;
@@ -87,6 +88,8 @@ const DESTINATIONS: Destination[] = [
   },
 ];
 
+const FEATURED_DESTINATIONS = ['Badian', 'Oslob', 'Moalboal'];
+
 const TYPE_COLORS: Record<string, string> = {
   Waterfall: '#e0f2fe', Beach: '#fef9c3', Mountain: '#dcfce7', Heritage: '#fce7f3',
   Wildlife: '#ede9fe', Island: '#e0f2fe', Adventure: '#ffedd5', Diving: '#cffafe',
@@ -96,25 +99,30 @@ const TYPE_COLORS: Record<string, string> = {
   'Must Visit': '#fef9c3',
 };
 
-export default function Destinations() {
-  const [selected, setSelected] = useState<Destination | null>(null);
+export default function Destinations({ showAll = false }: { showAll?: boolean }) {
+  const visibleDestinations = showAll
+    ? DESTINATIONS
+    : DESTINATIONS.filter(destination => FEATURED_DESTINATIONS.includes(destination.name));
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const selected = selectedIndex === null || selectedIndex >= visibleDestinations.length ? null : visibleDestinations[selectedIndex];
+  const isJourneyEnd = selectedIndex === visibleDestinations.length;
 
   return (
     <section id="destinations" style={{ padding: '80px 0', background: 'var(--bg-gray)' }}>
       <div className="container">
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
           <span className="section-tag">South Cebu</span>
-          <h2 className="section-title">Drive to Your Next Adventure</h2>
+          <h2 className="section-title">Drive to Your Next Journey</h2>
           <p className="section-desc" style={{ margin: '0 auto', textAlign: 'center' }}>
             Explore 14 stunning destinations from Carcar to Santander — waterfalls, beaches, mountains & more.
           </p>
         </div>
 
         {/* Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
-          {DESTINATIONS.map(d => (
+        <div className="destinations-grid">
+          {visibleDestinations.map(d => (
             <div key={d.name}
-              onClick={() => setSelected(d)}
+              onClick={() => setSelectedIndex(visibleDestinations.indexOf(d))}
               style={{ position: 'relative', borderRadius: 'var(--radius)', overflow: 'hidden', height: '220px', cursor: 'pointer' }}
               onMouseEnter={e => { (e.currentTarget.querySelector('img') as HTMLImageElement).style.transform = 'scale(1.08)'; }}
               onMouseLeave={e => { (e.currentTarget.querySelector('img') as HTMLImageElement).style.transform = 'scale(1)'; }}>
@@ -133,26 +141,38 @@ export default function Destinations() {
             </div>
           ))}
         </div>
+        {!showAll && <div className="destination-view-all-wrap"><Link href="/destinations" className="destination-view-all">View All <ArrowRight size={16} /></Link></div>}
       </div>
 
       {/* Modal */}
-      {selected && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
-          onClick={() => setSelected(null)}>
-          <div style={{ background: '#fff', borderRadius: '16px', maxWidth: '520px', width: '100%', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.3)' }}
+      {(selected || isJourneyEnd) && (
+        <div className="destination-modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+          onClick={() => setSelectedIndex(null)}>
+          {isJourneyEnd ? (
+            <div className="destination-final-panel" onClick={e => e.stopPropagation()}>
+              <span className="section-tag">South Cebu with DriveEasy</span>
+              <h2>Drive to Your Next Journey</h2>
+              <p>Discover more beautiful destinations in Southern Cebu with DriveEasy.</p>
+              <div className="destination-modal-navigation destination-final-actions">
+                <button className="destination-nav-button" onClick={() => setSelectedIndex(visibleDestinations.length - 1)}><ArrowLeft size={16} /> Back</button>
+                <button className="destination-nav-button destination-nav-primary" onClick={() => setSelectedIndex(0)}>Explore Destinations <ArrowRight size={16} /></button>
+              </div>
+            </div>
+          ) : selected && (
+          <div className="destination-popup" style={{ background: '#fff', borderRadius: '16px', maxWidth: '520px', width: '100%', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.3)' }}
             onClick={e => e.stopPropagation()}>
             {/* Modal image */}
             <div style={{ position: 'relative', height: '200px' }}>
               <img src={selected.image} alt={selected.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)' }} />
-              <button onClick={() => setSelected(null)}
+              <button onClick={() => setSelectedIndex(null)}
                 style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                 <X size={16} />
               </button>
               <div style={{ position: 'absolute', bottom: '16px', left: '20px' }}>
                 <h3 style={{ color: '#fff', fontSize: '1.4rem', fontWeight: 800 }}>{selected.name}</h3>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem' }}>
-                  <MapPin size={12} /> South Cebu, Philippines
+                  <MapPin size={12} /> {selected.name}, South Cebu, Philippines
                 </div>
               </div>
             </div>
@@ -176,14 +196,15 @@ export default function Destinations() {
                   </div>
                 ))}
               </div>
-              <a href={`/booking`}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'var(--green)', color: '#fff', padding: '12px', borderRadius: '8px', fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none', transition: 'background 0.2s' }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--green-dark)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'var(--green)')}>
-                Book a Car to {selected.name} <ArrowRight size={16} />
-              </a>
+              <div className="destination-modal-navigation">
+                <button className="destination-nav-button" disabled={selectedIndex === 0} onClick={() => setSelectedIndex(index => Math.max(0, (index ?? 0) - 1))}><ArrowLeft size={16} /> Back</button>
+                <button className="destination-nav-button destination-nav-primary" onClick={() => setSelectedIndex(index => index === null ? 0 : index + 1)}>
+                  Next <ArrowRight size={16} />
+                </button>
+              </div>
             </div>
           </div>
+          )}
         </div>
       )}
     </section>

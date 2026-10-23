@@ -7,7 +7,6 @@ import WhyChooseUs from '@/components/WhyChooseUs';
 import Destinations from '@/components/Destinations';
 import HowItWorks from '@/components/HowItWorks';
 import Testimonials from '@/components/Testimonials';
-import AppPromotion from '@/components/AppPromotion';
 import Footer from '@/components/Footer';
 
 export default function Home() {
@@ -22,7 +21,6 @@ export default function Home() {
         <Destinations />
         <HowItWorks />
         <Testimonials />
-        <AppPromotion />
       </main>
       <Footer />
     </>

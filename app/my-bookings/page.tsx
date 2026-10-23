@@ -7,6 +7,7 @@ import { getSession } from '@/lib/auth';
 import { getSupabaseBrowserClient } from '@/lib/supabase';
 import { Calendar, MapPin, Car, Clock, X, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const STATUS_STYLE: Record<Booking['status'], { bg: string; color: string }> = {
   Pending:   { bg: '#fef9c3', color: '#854d0e' },
@@ -84,7 +85,7 @@ export default function MyBookingsPage() {
     <>
       <Navbar />
       <div style={{ paddingTop: '80px', minHeight: '100vh', background: 'var(--bg-gray)' }}>
-        <div style={{ background: 'var(--navy)', padding: '56px 24px', textAlign: 'center' }}>
+        <div style={{ position: 'relative', overflow: 'hidden', backgroundColor: 'var(--navy)', backgroundImage: "linear-gradient(rgba(15, 31, 46, 0.72), rgba(15, 31, 46, 0.72)), url('/images/bookings-car-background.jpg')", backgroundSize: 'cover', backgroundPosition: 'center 85%', backgroundRepeat: 'no-repeat', padding: '56px 24px', textAlign: 'center' }}>
           <div className="container">
             <span className="section-tag">My Bookings</span>
             <h1 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 900, color: '#fff', margin: '12px 0 12px' }}>Your Booking History</h1>
@@ -92,11 +93,18 @@ export default function MyBookingsPage() {
           </div>
         </div>
 
-        <div className="container" style={{ padding: '48px 24px' }}>
+        <div className="container my-bookings-content">
           {loadError && <p role="alert" style={{ color: '#b42318', marginBottom: 18 }}>{loadError}</p>}
           {loading ? <p style={{ textAlign: 'center', padding: '70px 0', color: 'var(--text-muted)' }}>Loading your bookings…</p> : bookings.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '80px 0' }}>
-              <div style={{ fontSize: '4rem', marginBottom: '16px' }}>🚗</div>
+              <Image
+                src="/images/car-transparent.png"
+                alt="White SUV ready for your next trip"
+                width={900}
+                height={506}
+                priority
+                style={{ display: 'block', width: 'min(100%, 360px)', height: 'auto', objectFit: 'contain', margin: '0 auto 24px' }}
+              />
               <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--navy)', marginBottom: '8px' }}>{signedIn ? 'No bookings yet' : 'Sign in to view your bookings'}</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>{signedIn ? 'Book a car to see it here.' : 'Your booking history is linked to your account.'}</p>
               <Link href={signedIn ? '/cars' : '/login?next=%2Fmy-bookings'} className="btn-primary" style={{ display: 'inline-flex', gap: '8px', alignItems: 'center' }}>
@@ -110,7 +118,7 @@ export default function MyBookingsPage() {
                   <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy)', marginBottom: '20px' }}>
                     🕐 Pending ({pending.length})
                   </h2>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px', marginBottom: '40px' }}>
+                  <div className="my-bookings-grid my-bookings-grid-pending">
                     {pending.map(b => <BookingCard key={b.id} booking={b} onCancel={handleCancel} />)}
                   </div>
                 </>
@@ -120,7 +128,7 @@ export default function MyBookingsPage() {
                   <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy)', marginBottom: '20px' }}>
                     📋 Past Bookings ({others.length})
                   </h2>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+                  <div className="my-bookings-grid">
                     {others.map(b => <BookingCard key={b.id} booking={b} onCancel={handleCancel} />)}
                   </div>
                 </>
@@ -137,18 +145,18 @@ export default function MyBookingsPage() {
 function BookingCard({ booking: b, onCancel }: { booking: Booking; onCancel: (id: string) => void }) {
   const s = STATUS_STYLE[b.status];
   return (
-    <div style={{ background: '#fff', borderRadius: 'var(--radius)', overflow: 'hidden', boxShadow: 'var(--shadow)' }}>
+    <article className="my-booking-card">
       {b.carImage && (
-        <div style={{ height: '140px', overflow: 'hidden' }}>
+        <div className="my-booking-image">
           <img src={b.carImage} alt={b.car} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
       )}
       <div style={{ padding: '18px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
+          <div className="my-booking-card-heading">
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
               <Car size={15} color="var(--green)" />
-              <span style={{ fontWeight: 700, color: 'var(--navy)', fontSize: '1rem' }}>{b.car}</span>
+              <span className="my-booking-car-name">{b.car}</span>
             </div>
             <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>#{b.id} · {new Date(b.createdAt).toLocaleDateString()}</span>
           </div>
@@ -159,7 +167,7 @@ function BookingCard({ booking: b, onCancel }: { booking: Booking; onCancel: (id
 
         {b.status === 'Returned' && <p role="status" style={{ background: '#eff6ff', color: '#1d4ed8', borderRadius: 8, padding: '9px 11px', fontSize: '0.8rem', fontWeight: 650, marginBottom: 13 }}>✓ Vehicle returned and rental completed.</p>}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '7px', fontSize: '0.83rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+        <div className="my-booking-details">
           <span style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <MapPin size={13} color="var(--green)" /> {b.pickup}
           </span>
@@ -188,6 +196,6 @@ function BookingCard({ booking: b, onCancel }: { booking: Booking; onCancel: (id
           </button>
         )}
       </div>
-    </div>
+    </article>
   );
 }

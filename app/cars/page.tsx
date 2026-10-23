@@ -4,7 +4,7 @@ import Footer from '@/components/Footer';
 import CarCard from '@/components/CarCard';
 import { useState, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Search, X, Calendar, MapPin } from 'lucide-react';
+import { Search, X, Calendar, MapPin, ArrowRight } from 'lucide-react';
 import { ALL_CARS, CATEGORIES, TRANSMISSIONS, FUELS } from '@/lib/cars';
 
 const SORT_OPTIONS = [
@@ -74,6 +74,7 @@ function CarsContent() {
     setLocationError(''); setDateError('');
     const params = new URLSearchParams({ pickup, dropoff, pickupDate, pickupTime, dropDate, dropTime, days: String(rentalDays), promo });
     router.replace(`/cars?${params.toString()}`);
+    window.requestAnimationFrame(() => document.getElementById('car-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   };
 
   const filtered = useMemo(() => {
@@ -151,12 +152,12 @@ function CarsContent() {
                 {Array.from({ length: 30 }, (_, index) => index + 1).map(day => <option key={day} value={day}>{day} day{day === 1 ? '' : 's'}</option>)}
               </select>
             </div>
-            <button onClick={applySearch} className="btn-primary" style={{ justifyContent: 'center', alignSelf: 'end', minHeight: '40px' }}><Search size={15} /> Search Cars</button>
+            <button onClick={applySearch} className="btn-primary" style={{ justifyContent: 'center', alignSelf: 'end', minHeight: '40px' }}>Book Now <ArrowRight size={15} /></button>
           </div>
         </div>
       </div>
 
-      <div className="container" style={{ padding: '32px 24px' }}>
+      <div id="car-results" className="container" style={{ padding: '32px 24px', scrollMarginTop: '90px' }}>
         {/* Filter toolbar */}
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '20px' }}>
           <div style={{ position: 'relative', flex: 1, minWidth: '180px', maxWidth: '280px' }}>

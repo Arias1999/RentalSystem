@@ -3,6 +3,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Phone, Menu, X } from 'lucide-react';
+import { OPEN_SIGNUP_EVENT } from '@/components/SignupModal';
+import { OPEN_LOGIN_EVENT } from '@/components/LoginModal';
+import { OPEN_PROFILE_EVENT } from '@/components/ProfileModal';
 import { getBookings } from '@/lib/bookingStorage';
 import { useAuth } from '@/lib/auth';
 
@@ -61,7 +64,8 @@ export default function Navbar() {
               <span style={{ position: 'absolute', top: '-8px', right: '-12px', background: 'var(--green)', color: '#fff', fontSize: '0.6rem', fontWeight: 800, width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{pendingCount}</span>
             )}
           </Link>
-          {user && <Link href="/profile" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--green)' }}>Profile</Link>}
+          {user && <button type="button" onClick={() => window.dispatchEvent(new Event(OPEN_PROFILE_EVENT))} style={{ background: 'transparent', fontSize: '0.9rem', fontWeight: 600, color: 'var(--green)' }}>Profile</button>}
+          {!user && <><button type="button" onClick={() => window.dispatchEvent(new Event(OPEN_LOGIN_EVENT))} className="navbar-login">Sign in</button><button type="button" onClick={() => window.dispatchEvent(new Event(OPEN_SIGNUP_EVENT))} className="navbar-signup">Sign Up</button></>}
           <Link href="/cars" onClick={event => { if (!authLoading && !user) { event.preventDefault(); router.push('/login?next=%2Fcars'); } }} className="btn-primary" style={{ padding: '9px 20px', fontSize: '0.85rem' }}>Rent a Car</Link>
           <button onClick={() => setOpen(!open)} style={{ background: 'none', display: 'none', padding: '4px' }} className="mobile-menu-btn">
             {open ? <X size={24} /> : <Menu size={24} />}
@@ -80,7 +84,7 @@ export default function Navbar() {
             style={{ padding: '10px 0', fontSize: '1rem', fontWeight: 600, color: 'var(--green)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '8px' }}>
             My Bookings {pendingCount > 0 && <span style={{ background: 'var(--green)', color: '#fff', fontSize: '0.65rem', fontWeight: 800, padding: '2px 7px', borderRadius: '20px' }}>{pendingCount} pending</span>}
           </Link>
-          {user && <Link href="/profile" onClick={() => setOpen(false)} style={{ padding: '10px 0', fontSize: '1rem', fontWeight: 600, color: 'var(--green)', borderBottom: '1px solid var(--border)' }}>Profile</Link>}
+          {user && <button type="button" onClick={() => { setOpen(false); window.dispatchEvent(new Event(OPEN_PROFILE_EVENT)); }} style={{ padding: '10px 0', textAlign: 'left', background: 'transparent', fontSize: '1rem', fontWeight: 600, color: 'var(--green)', borderBottom: '1px solid var(--border)' }}>Profile</button>}
           <a href="tel:+919876543210" style={{ padding: '10px 0', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, color: 'var(--green)' }}>
             <Phone size={16} /> +91 98765 43210
           </a>

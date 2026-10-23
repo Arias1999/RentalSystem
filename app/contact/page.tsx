@@ -21,7 +21,7 @@ export default function ContactPage() {
         <div className="contact-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 48, marginTop: 40 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {[
-              { icon: <MapPin size={20} />, title: 'Our Office', text: 'Sun valley V-Rama,Cebu City – 110016' },
+              { icon: <MapPin size={20} />, title: 'Our Office', text: 'Sun valley V-Rama, Cebu City' },
               { icon: <Phone size={20} />, title: 'Phone', text: '+91 98765 43210' },
               { icon: <Mail size={20} />, title: 'Email', text: 'hello@driveeasy.in' },
               { icon: <Clock size={20} />, title: 'Business Hours', text: 'Mon–Sat: 8am – 8pm\nSun: 9am – 5pm' },
