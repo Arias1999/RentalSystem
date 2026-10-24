@@ -12,6 +12,7 @@ import { ArrowLeft, Car, CheckCircle, Fuel, Settings, Users } from 'lucide-react
 import Link from 'next/link';
 
 type Details = { pickup: string; dropoff: string; pickupDate: string; pickupTime: string; dropDate: string; dropTime: string; name: string; email: string; phone: string };
+type PaymentMethod = 'COD' | 'GCash';
 const LOCATIONS = ['Carcar', 'Argao', 'Dalaguete', 'Oslob', 'Moalboal', 'Badian'];
 const formatDate = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 const today = () => formatDate(new Date());
@@ -30,6 +31,7 @@ export default function CarDetailsPage() {
   const [ready, setReady] = useState(false);
   const [carAvailable, setCarAvailable] = useState(false);
   const [bookingBusy, setBookingBusy] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('COD');
 
   useEffect(() => {
     let active = true;
@@ -125,6 +127,7 @@ export default function CarDetailsPage() {
       dropoff_date: details.dropDate,
       dropoff_time: details.dropTime,
       rental_option: 'self',
+      payment_method: paymentMethod,
       customer_name: details.name.trim(),
       customer_email: user.email || details.email.trim(),
       customer_phone: details.phone.trim(),
@@ -143,7 +146,7 @@ export default function CarDetailsPage() {
         : bookingError.message);
       return;
     }
-    saveBooking({ car: car.name, carType: car.category, carImage: car.image, pickup: details.pickup, dropoff: details.dropoff, pickupDate: details.pickupDate, pickupTime: details.pickupTime, dropDate: details.dropDate, dropTime: details.dropTime, option: 'self', customerName: details.name, customerEmail: user.email || details.email, customerPhone: details.phone, dailyRate: car.price, rentalDays, subtotal, promoCode: appliedPromo || undefined, discountAmount, totalPrice });
+    saveBooking({ car: car.name, carType: car.category, carImage: car.image, pickup: details.pickup, dropoff: details.dropoff, pickupDate: details.pickupDate, pickupTime: details.pickupTime, dropDate: details.dropDate, dropTime: details.dropTime, option: 'self', paymentMethod, customerName: details.name, customerEmail: user.email || details.email, customerPhone: details.phone, dailyRate: car.price, rentalDays, subtotal, promoCode: appliedPromo || undefined, discountAmount, totalPrice });
     sessionStorage.removeItem('driveeasy_booking_draft');
     setCarAvailable(false);
     setSubmitted(true);
@@ -195,6 +198,13 @@ export default function CarDetailsPage() {
                 </div>
                 <h3 style={{ color: 'var(--navy)', fontSize: '1rem', marginTop: 8 }}>Customer details</h3>
                 {field('Full name', 'name')}{field('Email', 'email', 'email')}{field('Phone number', 'phone', 'tel')}
+                <fieldset style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12 }}>
+                  <legend style={{ color: 'var(--navy)', fontSize: '0.9rem', fontWeight: 700, padding: '0 5px' }}>Payment method</legend>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    {(['COD', 'GCash'] as const).map(method => <label key={method} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 10, border: `1px solid ${paymentMethod === method ? 'var(--green)' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer', color: 'var(--navy)', fontWeight: 650 }}><input type="radio" name="paymentMethod" value={method} checked={paymentMethod === method} onChange={() => setPaymentMethod(method)} />{method === 'COD' ? 'Cash on Delivery' : 'GCash'}</label>)}
+                  </div>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.76rem', margin: '9px 0 0' }}>{paymentMethod === 'COD' ? 'Pay in cash when you receive the vehicle.' : 'GCash payment instructions will be provided by the rental team after booking.'}</p>
+                </fieldset>
                 <div style={{ background: 'var(--green-light)', borderRadius: 8, padding: 16, color: 'var(--green)', marginTop: 4 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.86rem' }}><span>₱{car.price.toLocaleString()} × {rentalDays} day{rentalDays === 1 ? '' : 's'}</span><span>₱{subtotal.toLocaleString()}</span></div>
                   {appliedPromo && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.86rem', marginTop: 8 }}><span>Promo {appliedPromo}</span><span>−₱{discountAmount.toLocaleString()}</span></div>}

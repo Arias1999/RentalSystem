@@ -107,6 +107,13 @@ function CarsContent() {
         <div className="container">
           <h1 style={{ color: '#fff', fontWeight: 900, fontSize: 'clamp(1.4rem,3vw,2rem)', marginBottom: '20px' }}>Find Your Perfect Car</h1>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', background: '#fff', borderRadius: '12px', padding: '16px' }}>
+            <div>
+              <label htmlFor="car-search-top" style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>Search Cars</label>
+              <div style={{ position: 'relative' }}>
+                <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--green)' }} />
+                <input id="car-search-top" value={search} onChange={e => setSearch(e.target.value)} placeholder="Car name or type" style={inp} />
+              </div>
+            </div>
             {/* Pickup location */}
             <div style={{ position: 'relative' }}>
               <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>Pick-up Location</label>
@@ -160,10 +167,6 @@ function CarsContent() {
       <div id="car-results" className="container" style={{ padding: '32px 24px', scrollMarginTop: '90px' }}>
         {/* Filter toolbar */}
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '20px' }}>
-          <div style={{ position: 'relative', flex: 1, minWidth: '180px', maxWidth: '280px' }}>
-            <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search cars..." style={{ ...inp, border: '1px solid var(--border)' }} />
-          </div>
           <select value={category} onChange={e => setCategory(e.target.value)} style={{ ...sel, width: 'auto' }}>
             {CATEGORIES.map(c => <option key={c}>{c}</option>)}
           </select>

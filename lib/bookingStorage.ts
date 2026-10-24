@@ -9,6 +9,7 @@ export interface Booking {
   dropDate: string;
   dropTime: string;
   option: string;
+  paymentMethod?: 'COD' | 'GCash';
   dropoff?: string;
   customerName?: string;
   customerEmail?: string;

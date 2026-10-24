@@ -17,6 +17,8 @@ export default function SignupModal({ autoOpen = false }: SignupModalProps) {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [licenseNumber, setLicenseNumber] = useState('');
+  const [licenseExpiry, setLicenseExpiry] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [otp, setOtp] = useState('');
@@ -47,7 +49,7 @@ export default function SignupModal({ autoOpen = false }: SignupModalProps) {
     if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
     setBusy(true);
     try {
-      const result = await register(name.trim(), email.trim(), password, phone.trim(), { address: address.trim() });
+      const result = await register(name.trim(), email.trim(), password, phone.trim(), { address: address.trim(), licenseNumber: licenseNumber.trim(), licenseExpiry });
       if (result.error) { setError(result.error); return; }
       if (result.needsEmailConfirmation) { setAwaitingCode(true); setSuccess(`Account created. Enter the 6-digit code sent to ${email.trim()}.`); return; }
       setSuccess('Your account was created successfully. Welcome to DriveEasy!');
@@ -94,6 +96,8 @@ export default function SignupModal({ autoOpen = false }: SignupModalProps) {
         <label>Email<input required type="email" autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} /></label>
         <label>Phone number<input required type="tel" autoComplete="tel" value={phone} onChange={event => setPhone(event.target.value)} /></label>
         <label>Home address<textarea required autoComplete="street-address" rows={2} value={address} onChange={event => setAddress(event.target.value)} /></label>
+        <label>Driver’s license number<input required autoComplete="off" value={licenseNumber} onChange={event => setLicenseNumber(event.target.value)} /></label>
+        <label>Driver’s license expiry date<input required type="date" min={new Date().toISOString().slice(0, 10)} value={licenseExpiry} onChange={event => setLicenseExpiry(event.target.value)} /></label>
         <label>Password<span className="signup-password"><input required type={showPassword ? 'text' : 'password'} minLength={8} autoComplete="new-password" value={password} onChange={event => setPassword(event.target.value)} /><button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></span><small>Use at least 8 characters.</small></label>
         <label>Confirm password<input required type={showPassword ? 'text' : 'password'} minLength={8} autoComplete="new-password" value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} /></label>
         {error && <p className="signup-message error" role="alert">{error}</p>}

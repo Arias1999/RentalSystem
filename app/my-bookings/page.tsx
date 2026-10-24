@@ -37,7 +37,7 @@ export default function MyBookingsPage() {
       setSignedIn(!!user);
       if (!user) { setBookings([]); setLoading(false); return; }
       const { data, error } = await getSupabaseBrowserClient().from('bookings')
-        .select('id, car_name, car_type, car_image, pickup_location, dropoff_location, pickup_date, pickup_time, dropoff_date, dropoff_time, rental_option, customer_name, customer_email, customer_phone, daily_rate, rental_days, subtotal, promo_code, discount_amount, total_price, status, created_at')
+        .select('id, car_name, car_type, car_image, pickup_location, dropoff_location, pickup_date, pickup_time, dropoff_date, dropoff_time, rental_option, payment_method, customer_name, customer_email, customer_phone, daily_rate, rental_days, subtotal, promo_code, discount_amount, total_price, status, created_at')
         .eq('user_id', user.id).order('created_at', { ascending: false });
       if (!active) return;
       if (error) setLoadError(error.message);
@@ -55,6 +55,7 @@ export default function MyBookingsPage() {
           dropDate: row.dropoff_date,
           dropTime: row.dropoff_time,
           option: row.rental_option,
+          paymentMethod: row.payment_method,
           customerName: row.customer_name || undefined,
           customerEmail: row.customer_email || undefined,
           customerPhone: row.customer_phone || undefined,
@@ -251,6 +252,7 @@ function BookingCard({ booking: b, onCancel, review, reviewDraft, reviewError, r
         </div>
 
         {b.customerName && <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: 12 }}>Customer: {b.customerName} Â· {b.customerEmail}</p>}
+        {b.paymentMethod && <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: 12 }}>Payment method: <strong style={{ color: 'var(--navy)' }}>{b.paymentMethod === 'COD' ? 'Cash on Delivery' : b.paymentMethod}</strong></p>}
         {typeof b.totalPrice === 'number' && <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, marginBottom: 14, color: 'var(--navy)', fontSize: '0.9rem' }}>
           {b.promoCode && <p style={{ color: 'var(--green)', fontWeight: 700, marginBottom: 8 }}>Promo applied: {b.promoCode}</p>}
           {typeof b.subtotal === 'number' && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}><span>Subtotal</span><span>â‚±{b.subtotal.toLocaleString()}</span></div>}

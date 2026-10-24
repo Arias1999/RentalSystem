@@ -12,6 +12,8 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [licenseNumber, setLicenseNumber] = useState('');
+  const [licenseExpiry, setLicenseExpiry] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [otp, setOtp] = useState('');
@@ -34,7 +36,7 @@ export default function RegisterPage() {
     setError('');
     setNotice('');
     try {
-      const result = await register(name.trim(), email.trim(), password, phone.trim(), { address: address.trim() });
+      const result = await register(name.trim(), email.trim(), password, phone.trim(), { address: address.trim(), licenseNumber: licenseNumber.trim(), licenseExpiry });
       if (result.error) { setError(result.error); return; }
       if (result.needsEmailConfirmation) {
         setAwaitingCode(true);
@@ -106,6 +108,12 @@ export default function RegisterPage() {
           </label>
           <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600 }}>Home address
             <textarea required autoComplete="street-address" rows={2} value={address} onChange={e => setAddress(e.target.value)} style={{ ...inputStyle, resize: 'vertical' }} />
+          </label>
+          <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600 }}>Driver’s license number
+            <input required autoComplete="off" value={licenseNumber} onChange={e => setLicenseNumber(e.target.value)} style={inputStyle} />
+          </label>
+          <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600 }}>Driver’s license expiry date
+            <input required type="date" min={new Date().toISOString().slice(0, 10)} value={licenseExpiry} onChange={e => setLicenseExpiry(e.target.value)} style={inputStyle} />
           </label>
           <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600 }}>Password
             <input required type="password" minLength={8} autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} style={inputStyle} />
