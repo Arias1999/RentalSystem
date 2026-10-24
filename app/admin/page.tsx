@@ -234,7 +234,7 @@ export default function AdminPage() {
     <main style={{ minHeight: '100vh', background: '#f5f7f8', color: '#182533' }}>
       <aside className="admin-sidebar">
         <Link href="/" className="admin-brand">Drive<span>Easy</span><small>ADMIN CONSOLE</small></Link>
-        <div className="admin-nav-label">WORKSPACE</div>
+       
         {(['Overview', 'Bookings', 'Customers', 'Fleet', 'Tracking', 'Ratings', 'Messages'] as Tab[]).map((item, index) => {
           const Icon = [LayoutDashboard, CalendarDays, Users, CarFront, MapPin, Star, MessageCircle][index];
           return <button key={item} className={`admin-nav-item ${tab === item ? 'active' : ''}`} onClick={() => setTab(item)}><Icon size={18} />{item}{item === 'Bookings' && pending > 0 && <span className="admin-nav-count">{pending}</span>}</button>;
